@@ -1,38 +1,66 @@
-import { Bee, Utils } from '@ethersphere/bee-js'
+import { Bee } from '@ethersphere/bee-js'
+import { ZeroHash } from 'ethers'
 import { BEE_DEBUG_URL, BEE_URL } from './constants/constants'
 import { Comment } from './model/comment.model'
 import { getUsableStamp } from './uitls/stamps'
-import { getAddressFromUrl, getPrivateKeyFromUrl } from './uitls/url'
+import { getAddressFromIdentifier, getIdentifierFromUrl, getPrivateKeyFromIdentifier } from './uitls/url'
 import { isComment } from './asserts/models.assert'
 import { numberToFeedIndex } from './uitls/feeds'
+import { Options } from './model/options.model'
 
-export async function writeComment(url: string, comment: Comment) {
-  const privateKey = getPrivateKeyFromUrl(url)
+async function prepareOptions(options: Options = {}): Promise<Required<Options>> {
+  const beeApiUrl = options.beeApiUrl ?? BEE_URL
+  const beeDebugApiUrl = options.beeDebugApiUrl ?? BEE_DEBUG_URL
+  let { identifier, stamp } = options
 
-  // TODO Bee Debug URL should be configurable
-  const stamp = await getUsableStamp(BEE_DEBUG_URL)
-
-  if (!stamp) {
-    throw new Error('No available stamps found.')
+  if (!identifier) {
+    identifier = getIdentifierFromUrl(window.location.href)
   }
 
-  // TODO Bee URL should be configurable
-  const bee = new Bee(BEE_URL)
+  if (!identifier) {
+    throw new Error('Cannot generate private key from an invalid URL')
+  }
 
-  const { reference } = await bee.uploadData(stamp.batchID, JSON.stringify(comment))
+  if (!stamp) {
+    const usableStamp = await getUsableStamp(beeDebugApiUrl)
 
-  const feedWriter = bee.makeFeedWriter('sequence', Utils.keccak256Hash(getAddressFromUrl(url)), privateKey)
+    if (!usableStamp) {
+      throw new Error('No available stamps found.')
+    }
 
-  await feedWriter.upload(stamp.batchID, reference)
+    stamp = usableStamp.batchID
+  }
+
+  return {
+    stamp,
+    identifier,
+    beeApiUrl,
+    beeDebugApiUrl,
+  }
 }
 
-export async function readComments(url: string): Promise<Comment[]> {
-  // TODO Bee URL should be configurable
-  const bee = new Bee(BEE_URL)
+export async function writeComment(comment: Comment, options?: Options) {
+  const { identifier, stamp, beeApiUrl } = await prepareOptions(options)
 
-  const address = getAddressFromUrl(url)
+  const privateKey = getPrivateKeyFromIdentifier(identifier)
 
-  const feedReader = bee.makeFeedReader('sequence', Utils.keccak256Hash(address), address)
+  const bee = new Bee(beeApiUrl)
+
+  const { reference } = await bee.uploadData(stamp, JSON.stringify(comment))
+
+  const feedWriter = bee.makeFeedWriter('sequence', ZeroHash, privateKey)
+
+  await feedWriter.upload(stamp, reference)
+}
+
+export async function readComments(options?: Options): Promise<Comment[]> {
+  const { identifier, beeApiUrl } = await prepareOptions(options)
+
+  const bee = new Bee(beeApiUrl)
+
+  const address = getAddressFromIdentifier(identifier)
+
+  const feedReader = bee.makeFeedReader('sequence', ZeroHash, address)
 
   const comments: Comment[] = []
 
@@ -44,7 +72,6 @@ export async function readComments(url: string): Promise<Comment[]> {
 
       const data = await bee.downloadData(feedUpdate.reference)
 
-      // TODO assertComment, comments.push(...)
       const comment = data.json()
 
       if (isComment(comment)) {

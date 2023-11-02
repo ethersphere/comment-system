@@ -17,9 +17,9 @@ describe('url utils tests', () => {
   })
 
   test("getPathFromBzzUrl shouldn't parse invalid links", () => {
-    expect(getIdentifierFromUrl('ftp://localhost:1633/bzz/123/')).toEqual(null)
+    expect(getIdentifierFromUrl('ftp://localhost:1633/bzz/123/')).toEqual(undefined)
     expect(
       getIdentifierFromUrl('http://localhost:1633/bz/<hash>/c/2023/development-updates/July.html'),
-    ).toEqual(null)
+    ).toEqual(undefined)
   })
 })

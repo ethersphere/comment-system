@@ -8,26 +8,34 @@ import { Wallet, hexlify } from 'ethers'
 */
 const bzzPathRegex = /https?:\/\/.+\/bzz\/(.+)/
 
-export function getIdentifierFromUrl(url: string): string | null {
+export function getIdentifierFromUrl(url: string): string | undefined {
   const result = bzzPathRegex.exec(url)
 
-  return result && result[1] ? result[1] : null
+  return result && result[1] ? result[1] : undefined
 }
 
-export function getPrivateKeyFromUrl(url: string): Bytes<32> {
-  const identifier = getIdentifierFromUrl(url)
-
+export function getPrivateKeyFromIdentifier(identifier: string): Bytes<32> {
   if (!identifier) {
-    throw new Error('Cannot generate private key from an invalid URL')
+    throw new Error('Cannot generate private key from an invalid identifier')
   }
 
   return Utils.keccak256Hash(identifier)
 }
 
+export function getPrivateKeyFromUrl(url: string): Bytes<32> {
+  const identifier = getIdentifierFromUrl(url)
+
+  return getPrivateKeyFromIdentifier(identifier as string)
+}
+
+export function getAddressFromIdentifier(identifier: string): string {
+  const privateKey = getPrivateKeyFromIdentifier(identifier)
+
+  return new Wallet(hexlify(privateKey)).address
+}
+
 export function getAddressFromUrl(url: string): string {
   const privateKey = getPrivateKeyFromUrl(url)
 
-  const wallet = new Wallet(hexlify(privateKey))
-
-  return wallet.address
+  return new Wallet(hexlify(privateKey)).address
 }
