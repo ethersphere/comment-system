@@ -1,7 +1,7 @@
 import { Bee } from '@ethersphere/bee-js'
 import { ZeroHash } from 'ethers'
 import { BEE_DEBUG_URL, BEE_URL } from './constants/constants'
-import { Comment } from './model/comment.model'
+import { Comment, CommentRequest } from './model/comment.model'
 import { getUsableStamp } from './uitls/stamps'
 import { getAddressFromIdentifier, getIdentifierFromUrl, getPrivateKeyFromIdentifier } from './uitls/url'
 import { isComment } from './asserts/models.assert'
@@ -39,14 +39,16 @@ async function prepareOptions(options: Options = {}): Promise<Required<Options>>
   }
 }
 
-export async function writeComment(comment: Comment, options?: Options) {
+export async function writeComment(comment: CommentRequest, options?: Options) {
   const { identifier, stamp, beeApiUrl } = await prepareOptions(options)
 
   const privateKey = getPrivateKeyFromIdentifier(identifier)
 
   const bee = new Bee(beeApiUrl)
 
-  const { reference } = await bee.uploadData(stamp, JSON.stringify(comment))
+  const commentObject: Comment = { ...comment, timestamp: new Date().getTime() }
+
+  const { reference } = await bee.uploadData(stamp, JSON.stringify(commentObject))
 
   const feedWriter = bee.makeFeedWriter('sequence', ZeroHash, privateKey)
 

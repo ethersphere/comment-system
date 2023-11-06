@@ -7,7 +7,7 @@ describe('Comments tests', () => {
     await writeComment({ user: 'Abc', data: 'Typo in lorem ipsum' }, { identifier })
     const comments = await readComments({ identifier })
 
-    expect(comments).toStrictEqual([
+    expect(comments.map(({ user, data }) => ({ user, data }))).toStrictEqual([
       { user: 'Xyz', data: 'Nice post' },
       { user: 'Abc', data: 'Typo in lorem ipsum' },
     ])
