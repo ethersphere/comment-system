@@ -2,9 +2,19 @@
   "name": "@ethersphere/comment-system",
   "version": "1.0.0",
   "description": "A library for writing and reading comments from the Swarm network.",
-  "main": "src/index.ts",
+  "main": "index.js",
   "scripts": {
+    "build": "tsc",
     "test": "jest"
+  },
+  "exports": {
+    ".": {
+      "default": "./build/index.js",
+      "types": "./build/types/index.d.ts",
+      "require": "./build/index.js",
+      "import": "./build/index.js"
+    },
+    "./package.json": "./package.json"
   },
   "repository": {
     "type": "git",

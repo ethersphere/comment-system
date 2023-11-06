@@ -3,11 +3,11 @@
   "exclude": ["node_modules"],
   "compilerOptions": {
     "alwaysStrict": true,
-    "target": "es6",
+    "target": "ES2017",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "Node",
-    "module": "CommonJS",
+    "module": "ES6",
     "strict": true,
     "noImplicitAny": true,
     "resolveJsonModule": true,
