@@ -7,6 +7,7 @@ import { getAddressFromIdentifier, getIdentifierFromUrl, getPrivateKeyFromIdenti
 import { isComment } from './asserts/models.assert'
 import { numberToFeedIndex } from './uitls/feeds'
 import { Options } from './model/options.model'
+import { Optional } from './model/util.types'
 
 async function prepareOptions(
   options: Options = {},
