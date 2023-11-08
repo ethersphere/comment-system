@@ -12,10 +12,10 @@ import { Optional } from './model/util.types'
 async function prepareOptions(
   options: Options = {},
   stampRequired = true,
-): Promise<Optional<Required<Options>, 'stamp'>> {
+): Promise<Optional<Required<Options>, 'stamp' | 'approvedFeed'>> {
   const beeApiUrl = options.beeApiUrl ?? BEE_URL
   const beeDebugApiUrl = options.beeDebugApiUrl ?? BEE_DEBUG_URL
-  let { identifier, stamp } = options
+  let { identifier, stamp, approvedFeed } = options
 
   if (!identifier) {
     identifier = getIdentifierFromUrl(window.location.href)
@@ -40,6 +40,7 @@ async function prepareOptions(
     identifier,
     beeApiUrl,
     beeDebugApiUrl,
+    approvedFeed,
   }
 }
 
@@ -47,7 +48,9 @@ function prepareWriteOptions(options: Options = {}): Promise<Required<Options>> 
   return prepareOptions(options) as Promise<Required<Options>>
 }
 
-function prepareReadOptions(options: Options = {}): Promise<Omit<Required<Options>, 'stamp'>> {
+function prepareReadOptions(
+  options: Options = {},
+): Promise<Omit<Optional<Required<Options>, 'approvedFeed'>, 'stamp'>> {
   return prepareOptions(options, false)
 }
 
@@ -68,13 +71,13 @@ export async function writeComment(comment: CommentRequest, options?: Options) {
 }
 
 export async function readComments(options?: Options): Promise<Comment[]> {
-  const { identifier, beeApiUrl } = await prepareReadOptions(options)
+  const { identifier, beeApiUrl, approvedFeed } = await prepareReadOptions(options)
 
   const bee = new Bee(beeApiUrl)
 
   const address = getAddressFromIdentifier(identifier)
 
-  const feedReader = bee.makeFeedReader('sequence', ZeroHash, address)
+  const feedReader = bee.makeFeedReader('sequence', ZeroHash, approvedFeed || address)
 
   const comments: Comment[] = []
 
