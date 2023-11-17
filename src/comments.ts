@@ -61,7 +61,10 @@ export async function writeComment(comment: CommentRequest, options?: Options) {
 
   const bee = new Bee(beeApiUrl)
 
-  const commentObject: Comment = { ...comment, timestamp: new Date().getTime() }
+  const commentObject: Comment = {
+    ...comment,
+    timestamp: typeof comment.timestamp === 'number' ? comment.timestamp : new Date().getTime(),
+  }
 
   const { reference } = await bee.uploadData(stamp, JSON.stringify(commentObject))
 
@@ -75,9 +78,9 @@ export async function readComments(options?: Options): Promise<Comment[]> {
 
   const bee = new Bee(beeApiUrl)
 
-  const address = getAddressFromIdentifier(identifier)
+  const address = getAddressFromIdentifier(approvedFeed || identifier)
 
-  const feedReader = bee.makeFeedReader('sequence', ZeroHash, approvedFeed || address)
+  const feedReader = bee.makeFeedReader('sequence', ZeroHash, address)
 
   const comments: Comment[] = []
 
