@@ -3,5 +3,6 @@ export interface Options {
   identifier?: string // defaults to getIdentifierFromUrl(window.location.href)
   beeApiUrl?: string // defaults to http://localhost:1633
   beeDebugApiUrl?: string // defaults to http://localhost:1635
-  approvedFeed?: string
+  privateKey?: string // If set, private key won't be derived from identifier
+  approvedFeedAddress?: string // Address of feed that contains approved comments
 }

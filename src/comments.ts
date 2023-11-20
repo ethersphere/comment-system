@@ -12,10 +12,11 @@ import { Optional } from './model/util.types'
 async function prepareOptions(
   options: Options = {},
   stampRequired = true,
-): Promise<Optional<Required<Options>, 'stamp' | 'approvedFeed'>> {
+): Promise<Optional<Required<Options>, 'stamp' | 'privateKey' | 'approvedFeedAddress'>> {
   const beeApiUrl = options.beeApiUrl ?? BEE_URL
   const beeDebugApiUrl = options.beeDebugApiUrl ?? BEE_DEBUG_URL
-  let { identifier, stamp, approvedFeed } = options
+  const { privateKey, approvedFeedAddress } = options
+  let { identifier, stamp } = options
 
   if (!identifier) {
     identifier = getIdentifierFromUrl(window.location.href)
@@ -40,7 +41,8 @@ async function prepareOptions(
     identifier,
     beeApiUrl,
     beeDebugApiUrl,
-    approvedFeed,
+    privateKey,
+    approvedFeedAddress,
   }
 }
 
@@ -50,14 +52,14 @@ function prepareWriteOptions(options: Options = {}): Promise<Required<Options>> 
 
 function prepareReadOptions(
   options: Options = {},
-): Promise<Omit<Optional<Required<Options>, 'approvedFeed'>, 'stamp'>> {
+): Promise<Omit<Optional<Required<Options>, 'approvedFeedAddress'>, 'stamp' | 'privateKey'>> {
   return prepareOptions(options, false)
 }
 
 export async function writeComment(comment: CommentRequest, options?: Options) {
-  const { identifier, stamp, beeApiUrl } = await prepareWriteOptions(options)
+  const { identifier, stamp, beeApiUrl, privateKey: optionsPrivateKey } = await prepareWriteOptions(options)
 
-  const privateKey = getPrivateKeyFromIdentifier(identifier)
+  const privateKey = optionsPrivateKey || getPrivateKeyFromIdentifier(identifier)
 
   const bee = new Bee(beeApiUrl)
 
@@ -74,11 +76,11 @@ export async function writeComment(comment: CommentRequest, options?: Options) {
 }
 
 export async function readComments(options?: Options): Promise<Comment[]> {
-  const { identifier, beeApiUrl, approvedFeed } = await prepareReadOptions(options)
+  const { identifier, beeApiUrl, approvedFeedAddress: optionsAddress } = await prepareReadOptions(options)
 
   const bee = new Bee(beeApiUrl)
 
-  const address = getAddressFromIdentifier(approvedFeed || identifier)
+  const address = optionsAddress || getAddressFromIdentifier(identifier)
 
   const feedReader = bee.makeFeedReader('sequence', ZeroHash, address)
 
