@@ -1,13 +1,15 @@
 import { Bee } from '@ethersphere/bee-js'
 import { ZeroHash } from 'ethers'
+import { v4 as uuid } from 'uuid'
 import { BEE_DEBUG_URL, BEE_URL } from './constants/constants'
-import { Comment, CommentRequest } from './model/comment.model'
-import { getUsableStamp } from './uitls/stamps'
-import { getAddressFromIdentifier, getIdentifierFromUrl, getPrivateKeyFromIdentifier } from './uitls/url'
+import { Comment, CommentNode, CommentRequest } from './model/comment.model'
+import { getUsableStamp } from './utils/stamps'
+import { getAddressFromIdentifier, getIdentifierFromUrl, getPrivateKeyFromIdentifier } from './utils/url'
 import { isComment } from './asserts/models.assert'
-import { numberToFeedIndex } from './uitls/feeds'
+import { numberToFeedIndex } from './utils/feeds'
 import { Options } from './model/options.model'
 import { Optional } from './model/util.types'
+import { commentListToTree } from './utils'
 
 async function prepareOptions(
   options: Options = {},
@@ -56,7 +58,7 @@ function prepareReadOptions(
   return prepareOptions(options, false)
 }
 
-export async function writeComment(comment: CommentRequest, options?: Options) {
+export async function writeComment(comment: CommentRequest, options?: Options): Promise<Comment> {
   const { identifier, stamp, beeApiUrl, privateKey: optionsPrivateKey } = await prepareWriteOptions(options)
 
   const privateKey = optionsPrivateKey || getPrivateKeyFromIdentifier(identifier)
@@ -65,6 +67,7 @@ export async function writeComment(comment: CommentRequest, options?: Options) {
 
   const commentObject: Comment = {
     ...comment,
+    id: uuid(),
     timestamp: typeof comment.timestamp === 'number' ? comment.timestamp : new Date().getTime(),
   }
 
@@ -73,6 +76,8 @@ export async function writeComment(comment: CommentRequest, options?: Options) {
   const feedWriter = bee.makeFeedWriter('sequence', ZeroHash, privateKey)
 
   await feedWriter.upload(stamp, reference)
+
+  return commentObject
 }
 
 export async function readComments(options?: Options): Promise<Comment[]> {
@@ -105,4 +110,10 @@ export async function readComments(options?: Options): Promise<Comment[]> {
   }
 
   return comments
+}
+
+export async function readCommentsAsTree(options?: Options): Promise<CommentNode[]> {
+  const comments = await readComments(options)
+
+  return commentListToTree(comments)
 }
