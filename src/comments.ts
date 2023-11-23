@@ -67,7 +67,7 @@ export async function writeComment(comment: CommentRequest, options?: Options): 
 
   const commentObject: Comment = {
     ...comment,
-    id: uuid(),
+    id: comment.id || uuid(),
     timestamp: typeof comment.timestamp === 'number' ? comment.timestamp : new Date().getTime(),
   }
 
